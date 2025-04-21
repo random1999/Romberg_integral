@@ -33,7 +33,7 @@ while( err > eps )
     err=abs((S(i)-S(i-1))/S(i));
 end
 R=S(i);
-I=i-1;
+I=i;
 end
 
 %% 测试
@@ -47,4 +47,4 @@ R1=integral(y,a,b);
 [R2,I,S]=Iterative_trapezoid_integral(y,a,b,1e-4);
 
 disp("matlab内置积分函数结果为:"+R1);
-disp("变步长梯形法则积分结果为:"+R2+",划分区间数:"+2^I+",迭代次数:"+I+" ,相对误差为:"+(R1-R2)/R1);
+disp("变步长梯形法则积分结果为:"+R2+",划分区间数:"+2^(I-1)+",迭代次数:"+I+" ,相对误差为:"+(R1-R2)/R1);

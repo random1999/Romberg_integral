@@ -3,7 +3,7 @@
 % 时间： 2025-04-18
 % 实现： Romberg方法计算定积分
 % ======================================================================================
-function [R,I,S]=Romberg_integral(f,a,b,eps) 
+function [R,I,ST]=Romberg_integral(f,a,b,eps) 
 % 变步长梯形公式
 %f：被积函数
 %a：积分下限
@@ -11,7 +11,7 @@ function [R,I,S]=Romberg_integral(f,a,b,eps)
 %eps：要求精度
 %R：积分结果
 %I：迭代次数
-%S：每次迭代估计值
+%ST：每次迭代估计值、外推估计值
 
 if nargin < 4
     eps = 1e-4; % 默认精度
@@ -21,22 +21,28 @@ i=1;        %迭代计数
 N=2^(i-1);  %划分区间数
 h=(b-a)/N;  %步长
 err=1;
-S(i,1)=h/2*(f(a)+f(b));
-while( err > eps )
+S=zeros(100,1);
+T=zeros(100,100);
+S(1)=h/2*(f(a)+f(b));
+while( err > eps || i>100)
     i=i+1;
     N=2^(i-1);
     h=(b-a)/N;
-    S(i,1)=S(i-1,1)/2;
+    S(i)=S(i-1)/2;
     for n=1:2:N-1
-       S(i,1)=S(i,1)+h*f(a+n*h);  %变步长梯形公式
+       S(i)=S(i)+h*f(a+n*h);  %变步长梯形公式
     end
-    for j=1:1:i-1
-       S(i-j,j+1)=(4^j*S(i-j+1,j)-S(i-j,j))/(4^j-1);  %外推加速
+    T(i,1)=(4*S(i)-S(i-1))/3;
+    if i>=3
+        for j=2:1:i-1
+          T(i,j)=(4^j*T(i,j-1)-T(i-1,j-1))/(4^j-1);  %外推加速
+        end
+        err=abs((T(i,i-1)-T(i,i-2))/T(i,i-2));
     end
-    err=abs((S(1,i)-S(1,i-1))/S(1,i-1));
 end
-R=S(1,i);
-I=i-1;
+R=T(i,i-1);
+I=i;
+ST=[S T];
 end
 
 %% 测试
@@ -47,7 +53,7 @@ y=@(x) x.^2.*sin(x)+x.^3.*cos(x); %定义被积函数
 a=0;b=5;
 
 R1=integral(y,a,b);
-[R2,I,S]=Romberg_integral(y,a,b,1e-4);
+[R2,I,ST]=Romberg_integral(y,a,b,1e-4);
 
 disp("matlab内置积分函数结果为:"+R1);
-disp("Romberg方法积分结果为:"+R2+",划分区间数:"+2^I+",迭代次数:"+I+" ,相对误差为:"+(R1-R2)/R1);
+disp("Romberg方法积分结果为:"+R2+",划分区间数:"+2^(I-1)+",迭代次数:"+I+" ,相对误差为:"+(R1-R2)/R1);
